@@ -28,44 +28,44 @@ def print_exercise(name, exercise):
 
 # -----------------------------------------------------------------------------
 
-# mom = smart_rehab._population[0]
-# dad = smart_rehab._population[1]
+mom = smart_rehab._population[0]
+dad = smart_rehab._population[1]
 
-# child = mom.cross_with(dad)
+child = mom.cross_with(dad)
 
-# print_exercise('Mom', mom)
-# print_exercise('Dad', dad)
-# print_exercise('=> Child', child)
-# print()
+print_exercise('Mom', mom)
+print_exercise('Dad', dad)
+print_exercise('=> Child', child)
+print()
 
-# mutant = child.mutate()
+mutant = child.mutate()
 
-# print_exercise('Child', child)
-# print_exercise('=> Mutant', mutant)
-# print()
+print_exercise('Child', child)
+print_exercise('=> Mutant', mutant)
+print()
 
 # -----------------------------------------------------------------------------
 
-print(smart_rehab)
-print()
+# print(smart_rehab)
+# print()
 
-wheel_slices = smart_rehab.build_roulette_wheel_slices()
-begin_slice = 0.0
+# wheel_slices = smart_rehab.build_roulette_wheel_slices()
+# begin_slice = 0.0
 
-for index, wheel_slice in enumerate(wheel_slices):
-    chance = (wheel_slice - begin_slice) * 100.0
-    print('{:2} => {:<22} # {:>5.2f}%'.format(index, wheel_slice, chance))
-    begin_slice = wheel_slice
+# for index, wheel_slice in enumerate(wheel_slices):
+#     chance = (wheel_slice - begin_slice) * 100.0
+#     print('{:2} => {:<22} # {:>5.2f}%'.format(index, wheel_slice, chance))
+#     begin_slice = wheel_slice
 
-print()
+# print()
 
-for i in range(20):
-    random_slice = random.random()
+# for i in range(20):
+#     random_slice = random.random()
 
-    index = smart_rehab.select_index_by_roulette_wheel(
-        wheel_slices, selection_slice=random_slice)
+#     index = smart_rehab.select_index_by_roulette_wheel(
+#         wheel_slices, selection_slice=random_slice)
 
-    print(' {:22s} => {}'.format(str(random_slice), index))
+#     print(' {:22s} => {}'.format(str(random_slice), index))
 
 # -----------------------------------------------------------------------------
 

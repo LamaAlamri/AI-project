@@ -45,7 +45,7 @@ def main():
     # Terminate either when the fitness is 1.0 (perfect)
     #   or when we're at the 5,000th Generation.
 
-    for generation in range(5_000):
+    for generation in range(1_000):
         if smart_rehab.fittest_fitness >= 1.0:
             break  # Perfect!
         print(smart_rehab.fittest_fitness)
@@ -340,10 +340,10 @@ class SmartRehab:
 # One "Chromosome"/"Individual" in the "Population" (SmartRehab).
 class RehabPlan:
     # 1 elbow, 1 upper arm, 1 knee/lower leg, 0 wrist.
-    MIN_NUM_OF_EXERCISES = 3
+    # MIN_NUM_OF_EXERCISES = 3
 
-    # 2 elbow, 2 upper arm, 2 knee/lower leg, 1 wrist.
-    MAX_NUM_OF_EXERCISES = 7
+    # # 2 elbow, 2 upper arm, 2 knee/lower leg, 1 wrist.
+    # MAX_NUM_OF_EXERCISES = 7
 
     def __init__(self, table, exercises):
         self._table = table
@@ -403,25 +403,37 @@ class RehabPlan:
             elif exercise.body_part == Exercise.WRIST:
                 num_of_wrist += 1
 
-        num_of_exercises_sum = (
-            # Do abs() so that (2 - 0) and (0 - 2) are both seen as 2 off.
-            #
-            # Use MAX_NUM_OF_EXERCISES so that the value is never negative,
-            #   but between 0 and MAX_NUM_OF_EXERCISES (inclusive).
+    #     num_of_exercises_sum = (
+    #         # Do abs() so that (2 - 0) and (0 - 2) are both seen as 2 off.
+    #         #
+    #         # Use MAX_NUM_OF_EXERCISES so that the value is never negative,
+    #         #   but between 0 and MAX_NUM_OF_EXERCISES (inclusive).
 
-            (self.MAX_NUM_OF_EXERCISES - abs(
-                optimal_plan.num_of_elbow - num_of_elbow))
-            + (self.MAX_NUM_OF_EXERCISES - abs(
-                optimal_plan.num_of_upper_arm - num_of_upper_arm))
-            + (self.MAX_NUM_OF_EXERCISES - abs(
-                optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg))
-            + (self.MAX_NUM_OF_EXERCISES - abs(
-                optimal_plan.num_of_wrist - num_of_wrist))
-        )  # 25
-      # -----------
-        max_num_of_exercises_sum = (
-            self.MAX_NUM_OF_EXERCISES * len(Exercise.BODY_PARTS)  # 100
-        )
+    #         (self.MAX_NUM_OF_EXERCISES - abs(
+    #             optimal_plan.num_of_elbow - num_of_elbow))
+    #         + (self.MAX_NUM_OF_EXERCISES - abs(
+    #             optimal_plan.num_of_upper_arm - num_of_upper_arm))
+    #         + (self.MAX_NUM_OF_EXERCISES - abs(
+    #             optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg))
+    #         + (self.MAX_NUM_OF_EXERCISES - abs(
+    #             optimal_plan.num_of_wrist - num_of_wrist))
+    #     )  # 25
+    #   # -----------
+    #     max_num_of_exercises_sum = (
+    #         self.MAX_NUM_OF_EXERCISES * len(Exercise.BODY_PARTS)  # 100
+    #     )
+        n = 0
+        n += abs(optimal_plan.num_of_elbow - num_of_elbow)
+        n += abs(optimal_plan.num_of_upper_arm - num_of_upper_arm)
+        n += abs(optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg)
+        n += abs(optimal_plan.num_of_wrist - num_of_wrist)
+
+        # noe = number of exercises which mean the sum of the optimal exercises (what the user entered)
+        # max_noe_sum = calculate all possible probabilities so that 4 = the number of the body parts in the table
+        # num_of_exercises_sum = possible probabilities - difference between the optimal and generated
+        noe = len(self._exercises)
+        max_noe_sum = 4 * noe
+        num_of_exercises_sum = max_noe_sum - n
 
         # Divide each weighted sum by its max sum, so that it will
         #   be between 0.0 and 1.0.
@@ -434,42 +446,34 @@ class RehabPlan:
         #   and multiply Condition Type by 0.50.
         # So 0.25 (25%) + 0.25 (25%) + 0.50 (50%) = 1.00 (100%).
         num_of_exercises = len(self)
-        fitness = 0.0
 
-        fitness += 0.25 * (age_category_sum / num_of_exercises)
-        fitness += 0.25 * (num_of_exercises_sum /
-                           max_num_of_exercises_sum)  # 25/100
-        fitness += 0.50 * (condition_type_sum / num_of_exercises)
+        fitness = 0.0
+        fitness += 0.25 * (age_category_sum / noe)
+        fitness += 0.25 * (num_of_exercises_sum / max_noe_sum)
+        fitness += 0.50 * (condition_type_sum / noe)
 
         return fitness
 
     def cross_with(self, partner):
         child_exercises = []
 
-        # Use min() so don't have index out of bounds.
-        num_of_exercises = min(len(self), len(partner))
+        # To avoid out of range exception we used minimum
+        lenOfMinParent = min(len(self), len(partner))
 
-        # 1 (not 0) to to ensure we always have a cross of genes.
-        #
-        # Because randrange() will be from 1 to num_of_exercises-1
-        #   (not num_of_exercises), we don't need to do num_of_exercises-1.
-
+        #  randrange() will be from 1 to lenOfMinParent-1
         # prevent identical child to one parent so thae random number should start from 1
-        # get at least one gene from first and second
-        crossover_point = random.randrange(1, num_of_exercises)
+        crossover_point = random.randrange(1, lenOfMinParent)
 
-        # Cross some of self's genes.
         for i in range(crossover_point):  # ====== cross from first parent
             child_exercises.append(self._exercises[i])
 
-        # Cross some of partner's genes.
         for i in range(crossover_point, len(partner)):  # ===== cross from the second parent
             child_exercises.append(partner._exercises[i])
 
         # Create the child.
         child = self.__class__(self._table, child_exercises)  # call rehap plan
 
-        return child   # === retarne the child that is generated
+        return child   # === return the child that is generated
 
     def mutate(self):
         # Make a copy for the new mutant.
@@ -479,16 +483,18 @@ class RehabPlan:
         # 1 = grow
         # 2 = shrink
         # 3 = mutate
-        action = random.randint(1, 3)
+        action = 3
 
-        if action == 1 and length < self.MAX_NUM_OF_EXERCISES:
+        # if action == 1 and length < self.MAX_NUM_OF_EXERCISES:
+        if action == 1 and length < 7:
             # Grow the list.
             mutated_exercises.append(self._table.random_exercise())
         else:
             # Grab a random index.
             mutation_point = random.randrange(0, length)
 
-            if action == 2 and length > self.MIN_NUM_OF_EXERCISES:
+            if action == 2 and length > 3:
+                #  if action == 2 and length > self.MIN_NUM_OF_EXERCISES:
                 # Pop off a random exercise (shrink the list).
                 mutated_exercises.pop(mutation_point)
             else:
@@ -496,7 +502,8 @@ class RehabPlan:
                 body_part = mutated_exercises[mutation_point].body_part
 
                 mutated_exercises[mutation_point] = (
-                    self._table.random_exercise(body_part)
+                    # self._table.random_exercise(body_part)
+                    self._table.random.choice(Exercise)
                 )
 
         # Create a new mutant.
