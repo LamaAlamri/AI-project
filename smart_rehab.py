@@ -24,6 +24,7 @@ from collections import OrderedDict
 
 
 def main():
+
     # Load the Search Space.
     table = TableOfAllExercises.from_csv()
 
@@ -36,14 +37,18 @@ def main():
     smart_rehab.crossover_rate = 0.95  # 95%
     smart_rehab.mutation_rate = 0.20   # 20%
 
+ # print(table)  # print search space
+    # print()
+    # print population
     smart_rehab.create_initial_population(70)  # 70 individuals/chromosomes.
-
+    print(smart_rehab)
     # Terminate either when the fitness is 1.0 (perfect)
     #   or when we're at the 5,000th Generation.
+
     for generation in range(5_000):
         if smart_rehab.fittest_fitness >= 1.0:
             break  # Perfect!
-
+        print(smart_rehab.fittest_fitness)
         smart_rehab.evolve()
 
     # Output the results.
@@ -216,7 +221,7 @@ class SmartRehab:
         # _fitnesses was filled in compute_fitness().
         for fitness in self._fitnesses:
             # Beginning of slice (range).
-            wheel_slice = current_sum
+            wheel_slice = current_sum  # the wheel is empty
 
             # Avoid divide by 0 and negative (invalid) slices.
             if fitness > 0.0 and self._total_fitness > 0.0:
@@ -348,6 +353,7 @@ class RehabPlan:
     def random_plan(klass, table, optimal_plan):
         exercises = []
 
+ # ------------------ To create individual with the possible cases (Depend on Phase 1 feedback )------------------
         for i in range(random.randint(1, 2)):
             exercises.append(table.random_exercise(Exercise.ELBOW))
 
@@ -411,10 +417,10 @@ class RehabPlan:
                 optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg))
             + (self.MAX_NUM_OF_EXERCISES - abs(
                 optimal_plan.num_of_wrist - num_of_wrist))
-        )
-
+        )  # 25
+      # -----------
         max_num_of_exercises_sum = (
-            self.MAX_NUM_OF_EXERCISES * len(Exercise.BODY_PARTS)
+            self.MAX_NUM_OF_EXERCISES * len(Exercise.BODY_PARTS)  # 100
         )
 
         # Divide each weighted sum by its max sum, so that it will
@@ -431,7 +437,8 @@ class RehabPlan:
         fitness = 0.0
 
         fitness += 0.25 * (age_category_sum / num_of_exercises)
-        fitness += 0.25 * (num_of_exercises_sum / max_num_of_exercises_sum)
+        fitness += 0.25 * (num_of_exercises_sum /
+                           max_num_of_exercises_sum)  # 25/100
         fitness += 0.50 * (condition_type_sum / num_of_exercises)
 
         return fitness
