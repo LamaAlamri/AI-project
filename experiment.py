@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-
-###
-# Files that must be in the same working directory as this file:
-# - ./smart_rehab.py
-# - ./smart_rehab.csv
-#
-# This code generated the Experimental Data for the Docx file:
-# - ./graph_data.csv
-###
-
-
 import csv
 
 from smart_rehab import *
@@ -26,6 +14,7 @@ def main():
     )
 
     experiment = Experiment(optimal_plan)
+
 
     experiment.pop_sizes = [10, 40, 70]
     experiment.crossover_rates = [0.55, 0.75, 0.95]
@@ -103,7 +92,7 @@ class Experiment:
 
             # +1 to get 1,000th generation.
             for g in range(gens + 1):
-                if (g % per_gen) == 0:
+                if (g % per_gen) == 0:#to get the muliple of 100
                     pg = g // per_gen
                     avg_fits[pg] += self.smart_rehab.average_fitness
 

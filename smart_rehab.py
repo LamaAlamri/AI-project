@@ -1,30 +1,9 @@
-#!/usr/bin/env python3
-
-###
-# Files that must be in the same working directory as this file:
-# - ./smart_rehab.csv
-#
-# SmartRehabilitation: a GA-Based Solution for Optimal Exercise Plans
-#
-#   Evolves a Genetic Algorithm to produce the Optimal Exercise Plan
-#   based on the User's input.
-#
-# Phase 1: October, 2021
-# Phase 2: November, 2021
-#
-# Python v3.9.7
-###
-
-
 import csv     # For TableOfAllExercises.from_csv().
 import random  # For RehabPlan.random_plan().
-
-# For RehabPlan.print_plan() and TableOfAllExercises._data.
 from collections import OrderedDict
 
 
 def main():
-
     # Load the Search Space.
     table = TableOfAllExercises.from_csv()
 
@@ -37,14 +16,10 @@ def main():
     smart_rehab.crossover_rate = 0.95  # 95%
     smart_rehab.mutation_rate = 0.20   # 20%
 
- # print(table)  # print search space
-    # print()
-    # print population
     smart_rehab.create_initial_population(70)  # 70 individuals/chromosomes.
-    print(smart_rehab)
-    # Terminate either when the fitness is 1.0 (perfect)
-    #   or when we're at the 5,000th Generation.
 
+    # Terminate either when the fitness is 1.0 (perfect)
+    # or when we're at the 1,000th Generation.
     for generation in range(1_000):
         if smart_rehab.fittest_fitness >= 1.0:
             break  # Perfect!
@@ -113,10 +88,10 @@ def ask_for_optimal_plan():
 
 
 def input_loop(text, options=None):
-    # Not a dict? (A list/set.)
+   
     if(options is not None and
        not(hasattr(options, 'items') and callable(options.items))):
-        # Convert list/set to a dict.
+        
         options = {option: option for option in options}
 
     while True:
@@ -130,7 +105,7 @@ def input_loop(text, options=None):
             print('ERROR: Invalid input!')
         else:
             for option, value in options.items():
-                # For v3.3+, probably use casefold() instead of lower().
+               
                 if choice.lower() == option.lower():
                     return value
 
@@ -150,33 +125,35 @@ class SmartRehab:
 
     def create_initial_population(self, population_size=70):
         self._population_size = population_size
+        #encoding
         self._population = [
             RehabPlan.random_plan(self._table, self._optimal_plan)
             for i in range(population_size)
         ]
+        #to initialize array of zeros and it size = population size
         self._fitnesses = [0.0] * population_size
 
-        self.compute_fitness()
+        self.compute_whole_individuals_fitness()
 
-    def compute_fitness(self):
+    def compute_whole_individuals_fitness(self):
         self._total_fitness = 0.0
 
         self._fittest = None
         self._fittest_fitness = 0.0
-
+ #to loop through all the population and caculate the fitness to each one of them
         for i, rehab_plan in enumerate(self._population):
             fitness = rehab_plan.compute_fitness(self._optimal_plan)
 
             self._fitnesses[i] = fitness
             self._total_fitness += fitness
-
+ #to find the best fitness
             if self._fittest is None or fitness > self._fittest_fitness:
                 self._fittest = rehab_plan
                 self._fittest_fitness = fitness
 
         self._average_fitness = self._total_fitness / self._population_size
 
-    def evolve(self):
+    def evolve(self):#to create new population for the next generation by crossover and mutation
         wheel_slices = self.build_roulette_wheel_slices()
 
         # New generation.
@@ -185,23 +162,23 @@ class SmartRehab:
         while len(new_population) < self._population_size:
             rehab_plan = None
 
-            # Reproduce?
+            # Reproduce
             if random.random() < self.crossover_rate:
                 rehab_plan = self.crossover_by_roulette_wheel(wheel_slices)
             else:
-                rehab_plan = self.select_by_roulette_wheel(wheel_slices)
+                rehab_plan = self.select_by_roulette_wheel(wheel_slices)#select the indivisual as it is without crossover 
 
-            # Mutate?
+            # Mutate
             if random.random() < self.mutation_rate:
                 rehab_plan = rehab_plan.mutate()
 
             new_population.append(rehab_plan)
 
-        # Kill off old population and replace with new generation.
+        # replace with new generation.
         self._population = new_population
 
         # Compute fitness of new generation.
-        self.compute_fitness()
+        self.compute_whole_individuals_fitness()
 
     def crossover_by_roulette_wheel(self, wheel_slices):
         mom_index = self.select_index_by_roulette_wheel(wheel_slices)
@@ -211,7 +188,7 @@ class SmartRehab:
         mom = self._population[mom_index]
         dad = self._population[dad_index]
 
-        # Make a baby/child.
+        # Make a child.
         return mom.cross_with(dad)
 
     def build_roulette_wheel_slices(self):
@@ -221,7 +198,7 @@ class SmartRehab:
         # _fitnesses was filled in compute_fitness().
         for fitness in self._fitnesses:
             # Beginning of slice (range).
-            wheel_slice = current_sum  # the wheel is empty
+            wheel_slice = current_sum
 
             # Avoid divide by 0 and negative (invalid) slices.
             if fitness > 0.0 and self._total_fitness > 0.0:
@@ -233,8 +210,10 @@ class SmartRehab:
             # Update sum.
             current_sum = wheel_slice
 
-        # Last slice must be 1,
-        #   because the slices are from range 0.0 to 1.0.
+        #Last slice must be 1,
+        #because the slices are from range 0.0 to 1.0.
+        #because the last one take the last slice so we dont have to compute the slices
+        #-1 means the last slice and always the last slice end in 1
         wheel_slices[-1] = 1.0
 
         return wheel_slices
@@ -246,59 +225,42 @@ class SmartRehab:
 
         return self._population[index]
 
-    # wheel_slices is a sorted array of floats built from
-    #   build_roulette_wheel_slices().
+
     @staticmethod
     def select_index_by_roulette_wheel(wheel_slices, partner_index=-1,
                                        selection_slice=None):
         length = len(wheel_slices)
-
+        
         if length <= 1:
             return 0
-
-        # Pick a random slice (roll the marble).
+        #to find the index of mom and dad
+        # Pick a random slice .
         if selection_slice is None:
             selection_slice = random.random()
 
-        # A binary search for speed:
-        #   https://www.geeksforgeeks.org/binary-insertion-sort
-        #
-        # Could use bisect.bisect_left() instead of our own algorithm,
-        #   which is the same as we're doing below.
-        left_index = 0
-        middle_index = 0
-        right_index = length - 1
-
-        while left_index <= right_index:
-            # Use // for int division (floor).
-            middle_index = (left_index + right_index) // 2
-            wheel_slice = wheel_slices[middle_index]
-
-            if wheel_slice < selection_slice:
-                left_index = middle_index + 1
-            elif wheel_slice > selection_slice:
-                right_index = middle_index - 1
-            else:  # wheel_slice == selection_slice
-                left_index = middle_index - 1
+  
+        #to get the index of the selected slice 
+        #(we will take the next index of random)
+        if selection_slice <= wheel_slices[0]:
+            selection_index=0
+        else:   
+          for i in range(0, length, 1):
+            if i==length-1:
+                selection_index=length-1
                 break
-
-        selection_index = left_index
-
-        # Make sure not an invalid index.
-        if selection_index < 0:
-            selection_index = 0
-        elif selection_index >= length:
-            if length >= 1:
-                selection_index = length - 1
             else:
-                selection_index = 0
+                wheel_slice1 = wheel_slices[i]
+                wheel_slice2 = wheel_slices[i+1]
+                if  selection_slice >=  wheel_slice1 and selection_slice <= wheel_slice2:
+                    selection_index=i+1
+                    break
 
-        # Try to avoid asexual reproduction (same parents),
-        #   where partner_index is the current partner (other parent).
-        if selection_index == partner_index:
-            if selection_index > 0:
+        # Try to avoid same parents
+        # where partner_index is the current partner (other parent).
+        if selection_index == partner_index:#the dad's turn will be the index of the mom which is the partner (the mom becuse she the first there is no partner so it will be -1)
+            if selection_index > 0:#always take the previous slice except if the selection_index =0
                 selection_index -= 1
-            elif length >= 2:
+            else :#the selection_index =0 take the next slice
                 selection_index += 1  # 0 => 1
 
         return selection_index
@@ -340,10 +302,10 @@ class SmartRehab:
 # One "Chromosome"/"Individual" in the "Population" (SmartRehab).
 class RehabPlan:
     # 1 elbow, 1 upper arm, 1 knee/lower leg, 0 wrist.
-    # MIN_NUM_OF_EXERCISES = 3
+    MIN_NUM_OF_EXERCISES = 3
 
-    # # 2 elbow, 2 upper arm, 2 knee/lower leg, 1 wrist.
-    # MAX_NUM_OF_EXERCISES = 7
+    # 2 elbow, 2 upper arm, 2 knee/lower leg, 1 wrist.
+    MAX_NUM_OF_EXERCISES = 7
 
     def __init__(self, table, exercises):
         self._table = table
@@ -353,7 +315,6 @@ class RehabPlan:
     def random_plan(klass, table, optimal_plan):
         exercises = []
 
- # ------------------ To create individual with the possible cases (Depend on Phase 1 feedback )------------------
         for i in range(random.randint(1, 2)):
             exercises.append(table.random_exercise(Exercise.ELBOW))
 
@@ -368,32 +329,26 @@ class RehabPlan:
 
         return klass(table, exercises)
 
-    # Your fitness function includes three parameters:
-    #   Age Category, Condition Type and No. of Exercises,
-    #     where Age Category and No. of Exercises are equally important
-    #     but as half important as Condition Type.
-    #
-    # Your fitness function can be designed as weighted sum
-    #   and importance of factors can be encoded as weights 𝑤𝑖
-    #   in the fitness function, where Σ𝑤𝑖 = 1.
+  
     def compute_fitness(self, optimal_plan):
         # First, calculate the weighted sums.
+        #to calculate the difference between the optimal and what the genetic generate 
         age_category_sum = 0
         condition_type_sum = 0
-
         num_of_elbow = 0
         num_of_upper_arm = 0
         num_of_knee_lower_leg = 0
         num_of_wrist = 0
 
+ #to get the exercises from the table after we collect the indexs randomly 
         for exercise in self._exercises:
-            # +=1 so that a higher sum means a better fitness (fitter).
-
+ 
+# to check if the generated age and condition_type are the same as optimal (what the user entered)       
             if exercise.age_category == optimal_plan.age_category:
                 age_category_sum += 1
             if exercise.condition_type == optimal_plan.condition_type:
                 condition_type_sum += 1
-
+ #count the number of generated exercises 
             if exercise.body_part == Exercise.ELBOW:
                 num_of_elbow += 1
             elif exercise.body_part == Exercise.UPPER_ARM:
@@ -403,107 +358,94 @@ class RehabPlan:
             elif exercise.body_part == Exercise.WRIST:
                 num_of_wrist += 1
 
-    #     num_of_exercises_sum = (
-    #         # Do abs() so that (2 - 0) and (0 - 2) are both seen as 2 off.
-    #         #
-    #         # Use MAX_NUM_OF_EXERCISES so that the value is never negative,
-    #         #   but between 0 and MAX_NUM_OF_EXERCISES (inclusive).
+ #n => to calculate the difference between the optimal and generated 
+        #we use abs to avoid the impact of negative numbers
+        #so that the increasing or decreasing of the number of exercises has the same affect
+        #for example : if the optimal = 2 and the generated =1 has the same impact  if the optimal = 1 and the generated = 2
+        num_of_exercises_sum = (
+        abs(optimal_plan.num_of_elbow - num_of_elbow)
+         + abs(optimal_plan.num_of_upper_arm - num_of_upper_arm)
+         + abs(optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg)
+         + abs(optimal_plan.num_of_wrist - num_of_wrist)
+        )
 
-    #         (self.MAX_NUM_OF_EXERCISES - abs(
-    #             optimal_plan.num_of_elbow - num_of_elbow))
-    #         + (self.MAX_NUM_OF_EXERCISES - abs(
-    #             optimal_plan.num_of_upper_arm - num_of_upper_arm))
-    #         + (self.MAX_NUM_OF_EXERCISES - abs(
-    #             optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg))
-    #         + (self.MAX_NUM_OF_EXERCISES - abs(
-    #             optimal_plan.num_of_wrist - num_of_wrist))
-    #     )  # 25
-    #   # -----------
-    #     max_num_of_exercises_sum = (
-    #         self.MAX_NUM_OF_EXERCISES * len(Exercise.BODY_PARTS)  # 100
-    #     )
-        n = 0
-        n += abs(optimal_plan.num_of_elbow - num_of_elbow)
-        n += abs(optimal_plan.num_of_upper_arm - num_of_upper_arm)
-        n += abs(optimal_plan.num_of_knee_lower_leg - num_of_knee_lower_leg)
-        n += abs(optimal_plan.num_of_wrist - num_of_wrist)
-
-        # noe = number of exercises which mean the sum of the optimal exercises (what the user entered)
-        # max_noe_sum = calculate all possible probabilities so that 4 = the number of the body parts in the table
-        # num_of_exercises_sum = possible probabilities - difference between the optimal and generated
+#noe = number of exercises which mean the sum of the optimal exercises (what the user entered)
+        #max_noe_sum = calculate all possible probabilities so that 4 = the number of the body parts in the table
+        #num_of_exercises_sum = possible probabilities - difference between the optimal and generated 
         noe = len(self._exercises)
-        max_noe_sum = 4 * noe
-        num_of_exercises_sum = max_noe_sum - n
 
-        # Divide each weighted sum by its max sum, so that it will
-        #   be between 0.0 and 1.0.
-        # So, for example, an age sum of 1 / 5 will be 0.20,
-        #   and an age sum of 5 / 5 will be 1.0.
-        #
-        # Lastly, Age Category and No. of Exercises should be equally
-        #   important, but half as important as the Condition Type.
-        # Therefore, multiply Age Category and No. of Exercises by 0.25,
-        #   and multiply Condition Type by 0.50.
-        # So 0.25 (25%) + 0.25 (25%) + 0.50 (50%) = 1.00 (100%).
-        num_of_exercises = len(self)
+        max_noe_sum = 4 * noe
+
+        num_of_exercises_sum = max_noe_sum - num_of_exercises_sum
+
+
+  #as mentioed in the questions Age Category and number of Exercises should be equally important, 
+        # but half as important as the Condition Type.
+#num_of_exercises = len(self)
 
         fitness = 0.0
+
         fitness += 0.25 * (age_category_sum / noe)
+
         fitness += 0.25 * (num_of_exercises_sum / max_noe_sum)
+
         fitness += 0.50 * (condition_type_sum / noe)
+
+
 
         return fitness
 
     def cross_with(self, partner):
         child_exercises = []
 
-        # To avoid out of range exception we used minimum
-        lenOfMinParent = min(len(self), len(partner))
+        # to avoid out of range exception when choosing crossover point 
+        # e.g. if mom=3 and dad=6 the crossover point should not exceed 2
+        num_of_exercises = min(len(self), len(partner))
 
-        #  randrange() will be from 1 to lenOfMinParent-1
-        # prevent identical child to one parent so thae random number should start from 1
-        crossover_point = random.randrange(1, lenOfMinParent)
+       
+        #randrange() will be from 1 to num_of_exercises-1
+        # prevent identical child to one parent so the random number should start from 1
+        crossover_point = random.randrange(1, num_of_exercises)
 
+        
         for i in range(crossover_point):  # ====== cross from first parent
             child_exercises.append(self._exercises[i])
 
+        
         for i in range(crossover_point, len(partner)):  # ===== cross from the second parent
             child_exercises.append(partner._exercises[i])
 
         # Create the child.
         child = self.__class__(self._table, child_exercises)  # call rehap plan
 
-        return child   # === return the child that is generated
+        return child   # === retarne the child that is generated
 
     def mutate(self):
         # Make a copy for the new mutant.
         mutated_exercises = self._exercises.copy()
         length = len(mutated_exercises)
 
-        # 1 = grow
-        # 2 = shrink
+        # 1 = add one index
+        # 2 = remove one index 
         # 3 = mutate
-        action = 3
+        randomAction = random.randint(1, 3)
 
-        # if action == 1 and length < self.MAX_NUM_OF_EXERCISES:
-        if action == 1 and length < 7:
-            # Grow the list.
+        if randomAction == 1 and length < 7:
+            # add one index.
             mutated_exercises.append(self._table.random_exercise())
         else:
-            # Grab a random index.
+            # get a random index.
             mutation_point = random.randrange(0, length)
 
-            if action == 2 and length > 3:
-                #  if action == 2 and length > self.MIN_NUM_OF_EXERCISES:
-                # Pop off a random exercise (shrink the list).
+            if randomAction == 2 and length > 3:
+                # remove one index.
                 mutated_exercises.pop(mutation_point)
             else:
                 # Mutate a random exercise.
                 body_part = mutated_exercises[mutation_point].body_part
 
                 mutated_exercises[mutation_point] = (
-                    # self._table.random_exercise(body_part)
-                    self._table.random.choice(Exercise)
+                    self._table.random_exercise(body_part)
                 )
 
         # Create a new mutant.
@@ -738,7 +680,7 @@ class Exercise:
     KNEE_LOWER_LEG = 'Knee/Lower leg'
     WRIST = 'Wrist'
     BODY_PARTS = {ELBOW, UPPER_ARM, KNEE_LOWER_LEG, WRIST}
-    BODY_PARTS_LIST = list(BODY_PARTS)  # Faster for random.choice().
+    BODY_PARTS_LIST = list(BODY_PARTS) 
 
     # Condition Types.
     STROKE = 'Stroke'
@@ -791,3 +733,4 @@ class Exercise:
 
 if __name__ == '__main__':
     main()
+
