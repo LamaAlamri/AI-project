@@ -369,7 +369,7 @@ class RehabPlan:
          + abs(optimal_plan.num_of_wrist - num_of_wrist)
         )
 
-#noe = number of exercises which mean the sum of the optimal exercises (what the user entered)
+        #noe = number of exercises which mean the sum of the optimal exercises (what the user entered)
         #max_noe_sum = calculate all possible probabilities so that 4 = the number of the body parts in the table
         #num_of_exercises_sum = possible probabilities - difference between the optimal and generated 
         noe = len(self._exercises)
@@ -379,19 +379,13 @@ class RehabPlan:
         num_of_exercises_sum = max_noe_sum - num_of_exercises_sum
 
 
-  #as mentioed in the questions Age Category and number of Exercises should be equally important, 
+        #as mentioed in the questions Age Category and number of Exercises should be equally important, 
         # but half as important as the Condition Type.
-#num_of_exercises = len(self)
-
+        #num_of_exercises = len(self)
         fitness = 0.0
-
         fitness += 0.25 * (age_category_sum / noe)
-
         fitness += 0.25 * (num_of_exercises_sum / max_noe_sum)
-
         fitness += 0.50 * (condition_type_sum / noe)
-
-
 
         return fitness
 
@@ -470,7 +464,8 @@ class RehabPlan:
             [Exercise.KNEE_LOWER_LEG, []],
             [Exercise.WRIST, []],
         ])
-
+   
+        #to show all the exercises in one row 
         for exercise in self._exercises:
             plan[exercise.body_part].append(exercise)
 
@@ -517,8 +512,6 @@ class RehabPlan:
         for exercise in self._exercises:
             buff += '{}{}{} '.format(
                 exercise.body_part[0],
-                # Because of 'Stroke' and 'Spinal', can't just use [0],
-                #   which would be 'S' for both.
                 exercise.condition_type[0:2],
                 exercise.age_category[0],
             )
@@ -526,10 +519,6 @@ class RehabPlan:
         return buff + ']'
 
 
-# Inputted values from the User for the Optimal Rehab Plan
-#   that we are trying to create using SmartPlan (the Genetic Algorithm).
-#
-# These are the target values used for the fitness function compute_fitness().
 class OptimalPlan:
     def __init__(self, age_category, condition_type, num_of_elbow,
                  num_of_upper_arm, num_of_knee_lower_leg, num_of_wrist):
@@ -616,7 +605,7 @@ class TableOfAllExercises:
     DEFAULT_FILE = 'smart_rehab.csv'
 
     def __init__(self):
-        # OrderedDict so output will match the CSV file for easy checking.
+        # OrderedDict so output will match the CSV file 
         self._data = OrderedDict()
 
     @classmethod
